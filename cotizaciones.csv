@@ -1,2 +1,3 @@
 fecha,hora,moneda,compra,venta,compra_apertura,compra_minimo,compra_maximo,venta_apertura,venta_minimo,venta_maximo
 2026-05-12,10:27,Dólar,"38,55000","40,95000",38.55000,38.55000,38.55000,40.95000,40.95000,40.95000
+2026-05-12,12:43,Dólar,"38,75000","40,95000",38.55000,38.55000,38.75000,40.95000,40.95000,40.95000
