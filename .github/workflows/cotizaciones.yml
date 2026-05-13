@@ -2,7 +2,7 @@ name: Registro Cotizaciones BROU
 
 on:
   schedule:
-    - cron: '*/30 13-21 * * 1-5' # Cada 30 min entre las 10:00 y 18:00 UY (UTC-3)
+    - cron: '*/15 13-21 * * 1-5' # Cada 15 min entre las 10:00 y 18:00 UY (UTC-3)
   workflow_dispatch:
 
 permissions:
