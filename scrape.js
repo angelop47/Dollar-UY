@@ -76,9 +76,11 @@ async function scrape() {
       const compraVal = parseValue(row.compra);
       const ventaVal = parseValue(row.venta);
 
-      // Check if price changed since last record
-      if (lastRecord && lastRecord.compra === row.compra && lastRecord.venta === row.venta) {
-        log('SKIPPED', `No change detected for ${row.moneda}.`);
+      // Check if price changed since last record FOR THE SAME DAY
+      // If it's a new day, we should write even if value didn't change
+      const isSameDayAsLast = lastRecord && lastRecord.fecha === fecha;
+      if (isSameDayAsLast && lastRecord.compra === row.compra && lastRecord.venta === row.venta) {
+        log('SKIPPED', `No change detected for ${row.moneda} today.`);
         return null;
       }
 
