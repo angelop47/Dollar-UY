@@ -18,7 +18,7 @@ Este repositorio utiliza **GitHub Actions** y **Playwright** para monitorear la 
 
 ## Datos Registrados
 
-Los datos se almacenan en el archivo `cotizaciones.csv` con las siguientes columnas:
+Los datos se almacenan en el archivo [**cotizaciones.csv**](./cotizaciones.csv) con las siguientes columnas:
 
 - `fecha`: YYYY-MM-DD
 - `hora`: HH:mm (Uruguay)
