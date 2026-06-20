@@ -1,10 +1,10 @@
-import { chromium } from 'playwright';
+import * as cheerio from 'cheerio';
 import fs from 'fs';
 import { DateTime } from 'luxon';
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
 
-const URL = 'https://www.brou.com.uy/cotizaciones';
+const PORTLET_URL = 'https://www.brou.com.uy/c/portal/render_portlet?p_l_id=20593&p_p_id=cotizacionfull_WAR_broutmfportlet_INSTANCE_otHfewh1klyS&p_p_lifecycle=0&p_t_lifecycle=0&p_p_state=normal&p_p_mode=view&p_p_col_id=column-1&p_p_col_pos=0&p_p_col_count=2&p_p_isolated=1&currentURL=%2Fcotizaciones';
 const CSV_PATH = './cotizaciones.csv';
 const LOG_PATH = './scraper.log';
 const TIMEZONE = 'America/Montevideo';
@@ -18,32 +18,31 @@ function log(status, message) {
 
 async function scrape() {
   console.log('Starting scraper...');
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-  });
-  const page = await context.newPage();
   
   try {
-    console.log(`Navigating to ${URL}...`);
-    await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 });
-    
-    // Wait for the table to be visible
-    console.log('Waiting for table content...');
-    await page.waitForSelector('.cotizacion-portlet table', { timeout: 30000 });
-    
-    const rows = await page.$$eval('.cotizacion-portlet table tr', (trs) => {
-      return trs.map(tr => {
-        const moneda = tr.querySelector('td:nth-child(1) .moneda')?.innerText.trim();
-        const compra = tr.querySelector('td:nth-child(3) .valor')?.innerText.trim();
-        const venta = tr.querySelector('td:nth-child(5) .valor')?.innerText.trim();
-        // Filter specifically for "Dólar"
-        if (moneda === 'Dólar' && compra && venta) {
-          return { moneda, compra, venta };
-        }
-        return null;
-      }).filter(Boolean);
+    console.log(`Fetching portlet data...`);
+    const res = await fetch(PORTLET_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
     });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    }
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    
+    const rows = $('.cotizacion-portlet table tr').map((i, el) => {
+      const moneda = $(el).find('td:nth-child(1) .moneda').text().trim();
+      const compra = $(el).find('td:nth-child(3) .valor').text().trim();
+      const venta = $(el).find('td:nth-child(5) .valor').text().trim();
+      if (moneda === 'Dólar' && compra && venta) {
+        return { moneda, compra, venta };
+      }
+      return null;
+    }).get().filter(Boolean);
 
     if (rows.length === 0) {
       throw new Error('No "Dólar" data found in the table. Check selectors or currency name.');
@@ -149,8 +148,6 @@ async function scrape() {
   } catch (error) {
     log('ERROR', `Scraping failed: ${error.message}`);
     process.exit(1);
-  } finally {
-    await browser.close();
   }
 }
 
